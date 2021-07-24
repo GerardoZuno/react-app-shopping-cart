@@ -1,22 +1,26 @@
-const express = require("express");
-const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const shortid = require("shortid");
-
+require('dotenv').config()
+const express = require('express');
 const app = express();
-app.use(bodyParser.json());
 
+app.use(express.json());
+app.use(express.urlencoded({
+  extended: true
+}));
+{}
 app.use("/", express.static(__dirname + "/build"));
 app.get("/", (req, res) => res.sendFile(__dirname + "/build/index.html"));
 
-mongoose.connect(
-  process.env.MONGODB_URL || "mongodb://localhost/react-shopping-cart-db",
-  {
-    useNewUrlParser: true,
-    useCreateIndex: true,
-    useUnifiedTopology: true,
-  }
-);
+const password = `syiHO5dPycnpU5rP`
+const dbname = `react-shopping-cart-db`
+const uri =  `mongodb+srv://react-shopping-cart-db:${password}@cluster0.rdl5d.mongodb.net/${dbname}?retryWrites=true&w=majority
+`
+
+
+mongoose.connect(uri, {useNewUrlParser: true, useCreateIndex: true, useUnifiedTopology: true,}
+  )
+
 
 const Product = mongoose.model(
   "products",
@@ -30,21 +34,28 @@ const Product = mongoose.model(
   })
 );
 
-app.get("/api/products", async (req, res) => {
-  const products = await Product.find({});
-  res.send(products);
-});
-
-app.post("/api/products", async (req, res) => {
+app.get("/products", async (req, res) => {
+  try {
+    const products = await Product.find({});
+    res.send(products);  
+  }catch(error) {
+     console.error(error)
+  }
+});  
+ 
+app.post("/products", async (req, res) => {
   const newProduct = new Product(req.body);
   const savedProduct = await newProduct.save();
   res.send(savedProduct);
 });
 
-app.delete("/api/products/:id", async (req, res) => {
+app.delete("  products/:id", async (req, res) => {
   const deletedProduct = await Product.findByIdAndDelete(req.params.id);
   res.send(deletedProduct);
 });
+
+
+
 
 const Order = mongoose.model(
   "order",
@@ -93,7 +104,16 @@ app.get("/api/orders", async (req, res) => {
 app.delete("/api/orders/:id", async (req, res) => {
   const order = await Order.findByIdAndDelete(req.params.id);
   res.send(order);
+}); 
+
+app.get("/api/orders", async (req, res) => {
+  const orders = await Order.find({});
+  res.send(orders);
+});
+app.delete("/api/orders/:id", async (req, res) => {
+  const order = await Order.findByIdAndDelete(req.params.id);
+  res.send(order);
 });
 
-const port = process.env.PORT || 5000;
-app.listen(port, () => console.log("serve at http://localhost:5000"));
+const port = process.env.PORT;
+app.listen(port, () => console.log("serve at http://localhost:5001"));
